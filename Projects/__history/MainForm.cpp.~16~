@@ -1,0 +1,222 @@
+﻿//---------------------------------------------------------------------------
+
+#include <vcl.h>
+#pragma hdrstop
+
+#include <windows.h>
+
+#include "MainForm.h"
+#include "DataModule1.h"
+#include "AddOrderForm.h"
+//---------------------------------------------------------------------------
+#pragma package(smart_init)
+#pragma resource "*.dfm"
+TFormMain *FormMain;
+//---------------------------------------------------------------------------
+__fastcall TFormMain::TFormMain(TComponent* Owner)
+	: TForm(Owner)
+{
+}
+//---------------------------------------------------------------------------
+void __fastcall TFormMain::FormCreate(TObject *Sender)
+{
+    try
+	{
+        // Даем время на инициализацию DM
+//        Sleep(100);
+
+        // Проверяем, что модуль данных создан
+        if (!DM)
+        {
+			ShowMessage(L"Error: Data module is not initialised!");
+			return;
+        }
+
+
+        // Проверяем подключение к БД
+        if (!DM->ADOConnection1->Connected)
+        {
+			ShowMessage(L"Error: No connection to database!");
+			return;
+		}
+
+        // ИНИЦИАЛИЗИРУЕМ DataSource перед использованием
+        if (!DataSourceDetails)
+            DataSourceDetails = new TDataSource(this);
+        if (!DataSourceOrders)
+			DataSourceOrders = new TDataSource(this);
+
+        // Связываем гриды с источниками данных
+        DataSourceDetails->DataSet = DM->QueryDetails;
+        DataSourceOrders->DataSet = DM->QueryOrders;
+
+        // Настройка колонок
+        SetupGridColumns();
+
+        // Настройка контекстного меню
+        DBGrid1->PopupMenu = PopupMenu1;
+		DBGrid2->PopupMenu = PopupMenu1;
+
+		DM->LoadDetailsQuery();
+
+		StatusBar1->SimpleText = L"Ready. Records number: " +
+            IntToStr(DM->QueryDetails->RecordCount);
+    }
+    catch (Exception &e)
+	{
+		ShowMessage(L"Error while creating form: " + e.Message);
+	}
+}
+//---------------------------------------------------------------------------
+
+// Настройка отображаемых названий колонок
+void __fastcall TFormMain::SetupGridColumns()
+{
+    // Настройка DBGrid1 (детали и изделия)
+    if (DBGrid1->Columns->Count >= 6)
+    {
+		DBGrid1->Columns->Items[0]->Title->Caption = L"Detail number";
+		DBGrid1->Columns->Items[0]->Width = 100;
+		DBGrid1->Columns->Items[1]->Title->Caption = L"Detail Name";
+		DBGrid1->Columns->Items[1]->Width = 150;
+		DBGrid1->Columns->Items[2]->Title->Caption = L"Product Number";
+        DBGrid1->Columns->Items[2]->Width = 100;
+		DBGrid1->Columns->Items[3]->Title->Caption = L"Product Name";
+		DBGrid1->Columns->Items[3]->Width = 150;
+		DBGrid1->Columns->Items[4]->Title->Caption = L"In stock";
+        DBGrid1->Columns->Items[4]->Width = 90;
+		DBGrid1->Columns->Items[5]->Title->Caption = L"Needed";
+        DBGrid1->Columns->Items[5]->Width = 90;
+    }
+
+    // Настройка DBGrid2 (заказы)
+    if (DBGrid2->Columns->Count >= 8)
+    {
+		DBGrid2->Columns->Items[0]->Title->Caption = L"№ order";
+        DBGrid2->Columns->Items[0]->Width = 80;
+		DBGrid2->Columns->Items[1]->Title->Caption = L"Date of order";
+		DBGrid2->Columns->Items[1]->Width = 100;
+		DBGrid2->Columns->Items[2]->Title->Caption = L"Customer";
+		DBGrid2->Columns->Items[2]->Width = 120;
+		DBGrid2->Columns->Items[3]->Title->Caption = L"Product";
+		DBGrid2->Columns->Items[3]->Width = 120;
+		DBGrid2->Columns->Items[4]->Title->Caption = L"Products number";
+		DBGrid2->Columns->Items[4]->Width = 100;
+		DBGrid2->Columns->Items[5]->Title->Caption = L"Details per 1 prod.";
+		DBGrid2->Columns->Items[5]->Width = 120;
+		DBGrid2->Columns->Items[6]->Title->Caption = L"Details needed";
+        DBGrid2->Columns->Items[6]->Width = 120;
+		DBGrid2->Columns->Items[7]->Title->Caption = "Details in stock";
+        DBGrid2->Columns->Items[7]->Width = 120;
+    }
+}
+//---------------------------------------------------------------------------
+
+// Выделение строк цветом в первом гриде (где не хватает деталей)
+void __fastcall TFormMain::DBGrid1DrawColumnCell(TObject *Sender,
+    const TRect &Rect, int DataCol, TColumn *Column, TGridDrawState State)
+{
+    try
+    {
+        if (!DM->QueryDetails->IsEmpty())
+        {
+            int nalichie = DM->QueryDetails->FieldByName("kol_nalichie")->AsInteger;
+            int trebuetsya = DM->QueryDetails->FieldByName("kol_trebuetsya")->AsInteger;
+
+            // Если деталей не хватает - выделяем красным
+            if (nalichie < trebuetsya)
+            {
+                if (!State.Contains(gdSelected))
+                {
+                    DBGrid1->Canvas->Brush->Color = clRed;
+                    DBGrid1->Canvas->Font->Color = clWhite;
+                    DBGrid1->Canvas->Font->Style = TFontStyles() << fsBold;
+                }
+            }
+
+            DBGrid1->DefaultDrawColumnCell(Rect, DataCol, Column, State);
+        }
+    }
+    catch (Exception &e)
+    {
+        // Игнорируем ошибки отрисовки
+    }
+}
+//---------------------------------------------------------------------------
+
+// Выделение строк цветом во втором гриде
+void __fastcall TFormMain::DBGrid2DrawColumnCell(TObject *Sender,
+    const TRect &Rect, int DataCol, TColumn *Column, TGridDrawState State)
+{
+    try
+    {
+        if (!DM->QueryOrders->IsEmpty())
+        {
+            int trebuetsya = DM->QueryOrders->FieldByName("kol_det_trebuetsya")->AsInteger;
+            int nalichie = DM->QueryOrders->FieldByName("kol_det_nalichie")->AsInteger;
+
+            // Если деталей не хватает для заказа - выделяем желтым
+            if (nalichie < trebuetsya)
+            {
+                if (!State.Contains(gdSelected))
+                {
+                    DBGrid2->Canvas->Brush->Color = clYellow;
+                    DBGrid2->Canvas->Font->Color = clBlack;
+                }
+            }
+
+            DBGrid2->DefaultDrawColumnCell(Rect, DataCol, Column, State);
+        }
+    }
+    catch (Exception &e)
+    {
+        // Игнорируем ошибки отрисовки
+    }
+}
+//---------------------------------------------------------------------------
+
+// Кнопка "Добавить заказ"
+void __fastcall TFormMain::ButtonAddOrderClick(TObject *Sender)
+{
+    TFormAddOrder *Form = new TFormAddOrder(this);
+    try
+    {
+        Form->ShowModal();
+    }
+    __finally
+    {
+        delete Form;
+    }
+}
+//---------------------------------------------------------------------------
+
+// Кнопка "Обновить"
+void __fastcall TFormMain::ButtonRefreshClick(TObject *Sender)
+{
+    try
+    {
+        DM->LoadDetailsQuery();
+		StatusBar1->SimpleText = L"Data was updated. Records: " +
+            IntToStr(DM->QueryDetails->RecordCount);
+    }
+    catch (Exception &e)
+	{
+		ShowMessage(L"Error while updating: " + e.Message);
+    }
+}
+//---------------------------------------------------------------------------
+
+// Контекстное меню - Добавить заказ
+void __fastcall TFormMain::MenuAddOrderClick(TObject *Sender)
+{
+    ButtonAddOrderClick(Sender);
+}
+//---------------------------------------------------------------------------
+
+// Контекстное меню - Обновить
+void __fastcall TFormMain::MenuRefreshClick(TObject *Sender)
+{
+    ButtonRefreshClick(Sender);
+}
+//---------------------------------------------------------------------------
+

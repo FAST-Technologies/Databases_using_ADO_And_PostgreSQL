@@ -1,0 +1,346 @@
+﻿//---------------------------------------------------------------------------
+#include <vcl.h>
+#pragma hdrstop
+
+#include <windows.h>
+
+#include "DataModule1.h"
+#include <System.DateUtils.hpp>
+#include <System.SysUtils.hpp>
+//---------------------------------------------------------------------------
+#pragma package(smart_init)
+#pragma classgroup "Vcl.Controls.TControl"
+#pragma resource "*.dfm"
+TDM *DM;
+//---------------------------------------------------------------------------
+__fastcall TDM::TDM(TComponent* Owner)
+	: TDataModule(Owner)
+{
+}
+//---------------------------------------------------------------------------
+
+
+// Создание модуля данных
+void __fastcall TDM::DataModuleCreate(TObject *Sender)
+{
+    try
+	{
+        Sleep(50);
+		ConnectToDatabase();
+        CheckDatabaseStructure();
+        LoadDetailsQuery();
+
+        // Настраиваем событие AfterScroll для автоматического обновления второго грида
+        if (QueryDetails)
+            QueryDetails->AfterScroll = QueryDetailsAfterScroll;
+    }
+    catch (Exception &e)
+    {
+        ShowMessage("Error while initialising the data module: " + e.Message);
+    }
+}
+//---------------------------------------------------------------------------
+
+//---------------------------------------------------------------------------
+// Метод для проверки существования таблиц
+void __fastcall TDM::CheckDatabaseStructure()
+{
+    TADOQuery *CheckQuery = new TADOQuery(this);
+    try
+    {
+        CheckQuery->Connection = ADOConnection1;
+
+        // Проверяем существование таблиц
+        CheckQuery->SQL->Clear();
+        CheckQuery->SQL->Add(
+            "SELECT table_name FROM information_schema.tables "
+            "WHERE table_schema = 'pmib2702' AND table_name IN ('p', 'j', 'q', 'r', 'c', 'spj', 'spj1')"
+        );
+        CheckQuery->Open();
+
+        String tables = "";
+        while (!CheckQuery->Eof)
+        {
+            tables = tables + CheckQuery->FieldByName("table_name")->AsString + ", ";
+            CheckQuery->Next();
+        }
+
+        ShowMessage("Найдены таблицы: " + tables);
+        CheckQuery->Close();
+        delete CheckQuery;
+    }
+    catch (Exception &e)
+    {
+        delete CheckQuery;
+        ShowMessage("Ошибка проверки структуры БД: " + e.Message);
+    }
+}
+//---------------------------------------------------------------------------
+
+
+void __fastcall TDM::ConnectToDatabase()
+{
+    try
+    {
+        if (!ADOConnection1)
+            return;
+
+		ADOConnection1->Close();
+
+		String db_host = "students.ami.nstu.ru"
+		String db_port = "5432"
+		String db_name = "students"
+		String db_user = "pmi-b2702"
+		String db_password = "4ioi#ZHzE"
+		FSchemaName = "pmib2702"
+
+
+		ADOConnection1->ConnectionString =
+		"DSN=PostgreSQL35W;"
+		"Server="+db_host+";"
+		"Post="+db_port+";"
+		"Database="+db_name+";"
+		"Uid="+db_user+";"
+		"Pwd="+db_password+";"
+		"SSLmode=prefer;";
+
+        ADOConnection1->LoginPrompt = false;
+        ADOConnection1->Open();
+
+        // Уберите ShowMessage в рабочей версии
+        ShowMessage("Соединение с базой данных установлено успешно!");
+    }
+    catch (Exception &e)
+    {
+        throw Exception("Ошибка подключения к БД: " + e.Message +
+                       "\nПроверьте:\n"
+                       "1. Наличие ODBC источника данных 'PostgreSQL_DSN'\n"
+                       "2. Корректность логина/пароля\n"
+                       "3. Доступность сервера БД");
+    }
+}
+//---------------------------------------------------------------------------
+
+// ЗАПРОС 1: Загрузка данных о деталях и изделиях
+void __fastcall TDM::LoadDetailsQuery()
+{
+	try
+	{
+		QueryDetails->Close();
+
+		// SQL-запрос для получения информации о деталях и изделиях
+		QueryDetails->SQL->Clear();
+		QueryDetails->SQL->Add(
+		"SELECT"
+		"	p.n_det,"
+		"	p.name AS det_name,"
+		"	j.n_izd,"
+		"	j.name AS izd_name, "
+		"	COALESCE(nalichie.kol_nalichie, 0) AS kol_nalichie, "
+		"	COALESCE(potrebnost.kol_trebuetsya, 0) AS kol_trebuetsya, "
+		"	CASE "
+		"		WHEN COALESCE(nalichie.kol_nalichie, 0) < COALESCE(potrebnost.kol_trebuetsya, 0) "
+		"		THEN 'ДЕФИЦИТ' "
+		"		ELSE 'OK' "
+		"	END AS status "
+		"FROM pmib2702.p p "
+		"CROSS JOIN pmib2702.j j "
+		"INNER JOIN pmib2702.q q ON p.n_det = q.n_det AND j.n_izd = q.n_izd "
+		"LEFT JOIN ( "
+		"	SELECT "
+		"		n_det, "
+		"		n_izd, "
+		"		SUM(kol) AS kol_nalichie "
+		"	FROM pmib2702.spj1 spj1 "
+		"	GROUP BY n_det, n_izd "
+		") AS nalichie ON p.n_det = nalichie.n_det AND j.n_izd = nalichie.n_izd "
+		"LEFT JOIN ( "
+		"	SELECT "
+		"		q.n_det, "
+		"		q.n_izd, "
+		"		SUM(r.kol * q.kol) AS kol_trebuetsya "
+		"	FROM pmib2702.r r"
+		"	INNER JOIN pmib2702.q q ON r.n_izd = q.n_izd "
+		"	WHERE r.date_ship IS NULL "
+		"	GROUP BY q.n_det, q.n_izd "
+		") AS potrebnost ON p.n_det = potrebnost.n_det AND j.n_izd = potrebnost.n_izd "
+		"ORDER BY p.n_det, j.n_izd ASC;"
+		);
+
+        QueryDetails->Open();
+    }
+    catch (Exception &e)
+    {
+        throw Exception("Ошибка выполнения запроса 1: " + e.Message);
+    }
+}
+//---------------------------------------------------------------------------
+
+// ЗАПРОС 2: Загрузка заказов для указанной детали
+void __fastcall TDM::LoadOrdersForDetail(String detailNum)
+{
+    try
+    {
+        QueryOrders->Close();
+
+        QueryOrders->SQL->Clear();
+		QueryOrders->SQL->Add(
+            "SELECT "
+            "    r.n_real AS n_zakaza, "
+            "    r.date_order AS data_zakaza, "
+            "    c.name AS zakazchik, "
+			"    j.name AS izdelie, "
+            "    r.kol AS kol_izdeliy, "
+            "    q.kol AS kol_det_na_1_izd, "
+			"    (r.kol * q.kol) AS kol_det_trebuetsya, "
+			"    COALESCE(nalichie.kol_det_nalichie, 0) AS kol_det_nalichie, "
+			"    CASE"
+			"	     WHEN COALESCE(nalichie.kol_det_nalichie, 0) < (r.kol * q.kol) "
+			"        THEN 'ДЕФИЦИТ' "
+			"        ELSE 'OK' "
+			"    END AS status "
+			"FROM pmib2702.r r "
+			"INNER JOIN pmib2702.c c ON r.n_cl = c.n_cl "
+			"INNER JOIN pmib2702.j j ON r.n_izd = j.n_izd "
+			"INNER JOIN pmib2702.q ON r.n_izd = q.n_izd "
+			"LEFT JOIN ( "
+			"     SELECT n_det, "
+			"            n_izd, "
+			"            SUM(kol) AS kol_det_nalichie "
+			"     FROM pmib2702.spj1"
+			"     GROUP BY n_det, n_izd "
+			") AS nalichie ON q.n_det = nalichie.n_det AND r.n_izd = nalichie.n_izd "
+            "WHERE q.n_det = :n_det "
+            "AND r.date_ship IS NULL "
+			"ORDER BY r.date_order "
+//            "SELECT "
+//			"    r.n_real AS n_zakaza, "
+//            "    r.date_order AS data_zakaza, "
+//            "    c.name AS zakazchik "
+//            "FROM pmib2702.r r "
+//            "INNER JOIN pmib2702.c c ON r.n_cl = c.n_cl "
+//			"LIMIT 5"
+        );
+
+		QueryOrders->Parameters->ParamByName("n_det")->Value = detailNum;
+        QueryOrders->Open();
+    }
+    catch (Exception &e)
+    {
+		throw Exception("Ошибка выполнения запроса 2: " + e.Message);
+    }
+}
+//---------------------------------------------------------------------------
+
+// Обработчик события прокрутки в первом запросе
+void __fastcall TDM::QueryDetailsAfterScroll(TDataSet *DataSet)
+{
+    try
+    {
+        if (!QueryDetails->IsEmpty())
+        {
+            String detailNum = QueryDetails->FieldByName("n_det")->AsString.Trim();
+            LoadOrdersForDetail(detailNum);
+        }
+    }
+    catch (Exception &e)
+    {
+        ShowMessage("Ошибка при обновлении списка заказов: " + e.Message);
+    }
+}
+//---------------------------------------------------------------------------
+
+// ЗАПРОС 3: Добавление нового заказа
+bool __fastcall TDM::AddNewOrder(String nIzd, String nCl, int kol, double cost)
+{
+    TADOQuery *InsertQuery = new TADOQuery(this);
+    try
+    {
+        InsertQuery->Connection = ADOConnection1;
+
+        // Генерация нового номера заказа
+        TADOQuery *MaxQuery = new TADOQuery(this);
+        try
+        {
+            MaxQuery->Connection = ADOConnection1;
+            MaxQuery->SQL->Add(
+                "SELECT COALESCE(MAX(CAST(SUBSTRING(n_real FROM 2) AS INTEGER)), 0) + 1 AS next_num "
+				"FROM pmib2702.r WHERE n_real ~ '^R[0-9]+$'"
+            );
+            MaxQuery->Open();
+            int nextNum = MaxQuery->FieldByName("next_num")->AsInteger;
+            String newOrderNum = "R" + IntToStr(nextNum);
+            MaxQuery->Close();
+            delete MaxQuery;
+
+            // Вставка нового заказа
+            InsertQuery->SQL->Clear();
+            InsertQuery->SQL->Add(
+				"INSERT INTO pmib2702.r (n_real, n_izd, n_cl, date_order, kol, cost, date_pay, date_ship) "
+                "VALUES (:n_real, :n_izd, :n_cl, :date_order, :kol, :cost, NULL, NULL)"
+            );
+
+            InsertQuery->Parameters->ParamByName("n_real")->Value = newOrderNum;
+            InsertQuery->Parameters->ParamByName("n_izd")->Value = nIzd;
+            InsertQuery->Parameters->ParamByName("n_cl")->Value = nCl;
+            InsertQuery->Parameters->ParamByName("date_order")->Value = Date();
+            InsertQuery->Parameters->ParamByName("kol")->Value = kol;
+            InsertQuery->Parameters->ParamByName("cost")->Value = cost;
+
+            InsertQuery->ExecSQL();
+
+            ShowMessage("Заказ " + newOrderNum + " успешно добавлен!\n" +
+                       "Изделие: " + nIzd + "\n" +
+                       "Заказчик: " + nCl + "\n" +
+                       "Количество: " + IntToStr(kol) + "\n" +
+                       "Цена: " + FloatToStrF(cost, ffFixed, 10, 2));
+
+            // Обновляем данные в запросах
+            LoadDetailsQuery();
+
+            delete InsertQuery;
+            return true;
+        }
+        catch (...)
+        {
+            delete MaxQuery;
+            throw;
+        }
+    }
+    catch (Exception &e)
+    {
+        delete InsertQuery;
+        ShowMessage("Ошибка при добавлении заказа: " + e.Message);
+        return false;
+    }
+}
+//---------------------------------------------------------------------------
+
+// Получить количество деталей в наличии
+int __fastcall TDM::GetAvailableDetails(String nDet, String nIzd)
+{
+    TADOQuery *Query = new TADOQuery(this);
+    try
+    {
+        Query->Connection = ADOConnection1;
+        Query->SQL->Add(
+            "SELECT COALESCE(SUM(kol), 0) AS total "
+			"FROM pmib2702.spj1 "
+            "WHERE n_det = :n_det AND n_izd = :n_izd"
+        );
+        Query->Parameters->ParamByName("n_det")->Value = nDet;
+        Query->Parameters->ParamByName("n_izd")->Value = nIzd;
+        Query->Open();
+
+        int result = Query->FieldByName("total")->AsInteger;
+        Query->Close();
+        delete Query;
+        return result;
+    }
+    catch (Exception &e)
+    {
+        delete Query;
+        return 0;
+    }
+}
+//---------------------------------------------------------------------------

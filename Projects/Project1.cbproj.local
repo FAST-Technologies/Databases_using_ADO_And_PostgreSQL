@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>1899.12.30 00:00:00.000.833,=C:\Users\Vladimir\Documents\Embarcadero\Studio\Projects\Unit1.cpp</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.392,=C:\Users\Vladimir\Documents\Embarcadero\Studio\Projects\Project1PCH1.h</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.274,C:\Users\Vladimir\Documents\Embarcadero\Studio\Projects\Project1.cbproj=C:\Users\Vladimir\Documents\Embarcadero\Studio\Projects\Project1.cbproj</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.714,C:\Users\Vladimir\Documents\Embarcadero\Studio\Projects\Unit1.cpp=C:\Users\Vladimir\Documents\Embarcadero\Studio\Projects\MainForm.cpp</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.522,=C:\Users\Vladimir\Documents\Embarcadero\Studio\Projects\Unit3.cpp</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.693,C:\Users\Vladimir\Documents\Embarcadero\Studio\Projects\Unit2.h=C:\Users\Vladimir\Documents\Embarcadero\Studio\Projects\DataModule1.h</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.956,C:\Users\Vladimir\Documents\Embarcadero\Studio\Projects\Unit2.h=C:\Users\Vladimir\Documents\Embarcadero\Studio\Projects\AddOrderForm.h</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.956,C:\Users\Vladimir\Documents\Embarcadero\Studio\Projects\Unit2.cpp=C:\Users\Vladimir\Documents\Embarcadero\Studio\Projects\AddOrderForm.cpp</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.714,C:\Users\Vladimir\Documents\Embarcadero\Studio\Projects\Unit1.h=C:\Users\Vladimir\Documents\Embarcadero\Studio\Projects\MainForm.h</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.956,C:\Users\Vladimir\Documents\Embarcadero\Studio\Projects\Unit2.dfm=C:\Users\Vladimir\Documents\Embarcadero\Studio\Projects\AddOrderForm.dfm</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.693,C:\Users\Vladimir\Documents\Embarcadero\Studio\Projects\Unit2.dfm=C:\Users\Vladimir\Documents\Embarcadero\Studio\Projects\DataModule1.dfm</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.714,C:\Users\Vladimir\Documents\Embarcadero\Studio\Projects\Unit1.dfm=C:\Users\Vladimir\Documents\Embarcadero\Studio\Projects\MainForm.dfm</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.322,=C:\Users\Vladimir\Documents\Embarcadero\Studio\Projects\Unit2.cpp</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.870,=C:\Users\Vladimir\Documents\Embarcadero\Studio\Projects\Unit2.cpp</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.693,C:\Users\Vladimir\Documents\Embarcadero\Studio\Projects\Unit2.cpp=C:\Users\Vladimir\Documents\Embarcadero\Studio\Projects\DataModule1.cpp</Transaction>
+  </Transactions>
+	<ProjectSortOrder AutoSort="0" SortType="0">
+    <File Path="Project1.cpp"/>
+    <File Path="Project1PCH1.h"/>
+    <File Path="MainForm.cpp"/>
+    <File Path="MainForm.cpp"/>
+    <File Path="MainForm.dfm"/>
+    <File Path="MainForm.h"/>
+    <File Path="DataModule1.cpp"/>
+    <File Path="DataModule1.cpp"/>
+    <File Path="DataModule1.dfm"/>
+    <File Path="DataModule1.h"/>
+    <File Path="AddOrderForm.cpp"/>
+    <File Path="AddOrderForm.cpp"/>
+    <File Path="AddOrderForm.dfm"/>
+    <File Path="AddOrderForm.h"/>
+  </ProjectSortOrder>
+</BorlandProject>

@@ -1,0 +1,32 @@
+object DM: TDM
+  OldCreateOrder = False
+  OnCreate = DataModuleCreate
+  Height = 750
+  Width = 1000
+  object ADOConnection1: TADOConnection
+    Left = 40
+    Top = 32
+  end
+  object QueryDetails: TADOQuery
+    Connection = ADOConnection1
+    Parameters = <>
+    Left = 40
+    Top = 96
+  end
+  object QueryOrders: TADOQuery
+    Connection = ADOConnection1
+    Parameters = <>
+    Left = 40
+    Top = 160
+  end
+  object DataSourceDetails: TDataSource
+    DataSet = QueryDetails
+    Left = 144
+    Top = 96
+  end
+  object DataSourceOrders: TDataSource
+    DataSet = QueryOrders
+    Left = 144
+    Top = 160
+  end
+end

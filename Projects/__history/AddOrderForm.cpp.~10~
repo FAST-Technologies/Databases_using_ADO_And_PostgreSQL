@@ -1,0 +1,263 @@
+//---------------------------------------------------------------------------
+
+#include <vcl.h>
+#pragma hdrstop
+
+#include <windows.h>
+
+#pragma setlocale("Russian")
+
+#include "AddOrderForm.h"
+#include "DataModule1.h"
+#include <Data.Win.ADODB.hpp>
+//---------------------------------------------------------------------------
+#pragma package(smart_init)
+#pragma resource "*.dfm"
+TFormAddOrder *FormAddOrder;
+//---------------------------------------------------------------------------
+__fastcall TFormAddOrder::TFormAddOrder(TComponent* Owner)
+    : TForm(Owner)
+{
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TFormAddOrder::FormCreate(TObject *Sender)
+{
+    try
+    {
+        LoadIzdeliya();
+        LoadZakazchiki();
+
+        // Значения по умолчанию
+        EditKolichestvo->Text = "1";
+        EditCena->Text = "0.00";
+    }
+    catch (Exception &e)
+    {
+        ShowMessage("Ошибка при создании формы: " + e.Message);
+    }
+}
+//---------------------------------------------------------------------------
+
+// Загрузка списка изделий
+void __fastcall TFormAddOrder::LoadIzdeliya()
+{
+    TADOQuery *Query = new TADOQuery(this);
+    try
+    {
+        Query->Connection = DM->ADOConnection1;
+		Query->SQL->Add("SELECT n_izd, name, town FROM pmib2702.j j ORDER BY n_izd");
+        Query->Open();
+
+        ComboBoxIzdeliya->Items->Clear();
+        ComboBoxIzdeliya->Items->Add("-- Выберите изделие --");
+
+        while (!Query->Eof)
+        {
+            String item = Query->FieldByName("n_izd")->AsString.Trim() + " - " +
+                         Query->FieldByName("name")->AsString.Trim() + " (" +
+                         Query->FieldByName("town")->AsString.Trim() + ")";
+            ComboBoxIzdeliya->Items->Add(item);
+            Query->Next();
+        }
+
+        ComboBoxIzdeliya->ItemIndex = 0;
+        Query->Close();
+        delete Query;
+    }
+    catch (Exception &e)
+    {
+        delete Query;
+        throw Exception("Ошибка загрузки изделий: " + e.Message);
+	}
+}
+//---------------------------------------------------------------------------
+
+// Загрузка списка заказчиков
+void __fastcall TFormAddOrder::LoadZakazchiki()
+{
+    TADOQuery *Query = new TADOQuery(this);
+    try
+    {
+        Query->Connection = DM->ADOConnection1;
+		Query->SQL->Add("SELECT n_cl, name, town FROM pmib2702.c c ORDER BY n_cl");
+        Query->Open();
+
+        ComboBoxZakazchiki->Items->Clear();
+        ComboBoxZakazchiki->Items->Add("-- Выберите заказчика --");
+
+        while (!Query->Eof)
+        {
+            String item = Query->FieldByName("n_cl")->AsString.Trim() + " - " +
+                         Query->FieldByName("name")->AsString.Trim() + " (" +
+                         Query->FieldByName("town")->AsString.Trim() + ")";
+            ComboBoxZakazchiki->Items->Add(item);
+            Query->Next();
+        }
+
+        ComboBoxZakazchiki->ItemIndex = 0;
+        Query->Close();
+        delete Query;
+    }
+    catch (Exception &e)
+    {
+        delete Query;
+        throw Exception("Ошибка загрузки заказчиков: " + e.Message);
+    }
+}
+//---------------------------------------------------------------------------
+
+// Отображение информации об изделии
+void __fastcall TFormAddOrder::ComboBoxIzdeliyaChange(TObject *Sender)
+{
+    if (ComboBoxIzdeliya->ItemIndex > 0)
+    {
+        String selected = ComboBoxIzdeliya->Text;
+        String nIzd = selected.SubString(1, selected.Pos(" - ") - 1).Trim();
+        ShowIzdelieInfo(nIzd);
+
+        // Получаем рекомендованную цену
+        TADOQuery *Query = new TADOQuery(this);
+        try
+        {
+            Query->Connection = DM->ADOConnection1;
+            Query->SQL->Add(
+				"SELECT cost FROM pmib2702.v v "
+                "WHERE n_izd = :n_izd "
+                "ORDER BY date_begin DESC "
+                "LIMIT 1"
+            );
+            Query->Parameters->ParamByName("n_izd")->Value = nIzd;
+            Query->Open();
+
+            if (!Query->IsEmpty())
+            {
+                EditCena->Text = Query->FieldByName("cost")->AsString;
+            }
+
+            Query->Close();
+            delete Query;
+        }
+        catch (...)
+        {
+            delete Query;
+        }
+    }
+    else
+    {
+        MemoInfo->Lines->Clear();
+    }
+}
+//---------------------------------------------------------------------------
+
+// Показать информацию об изделии (необходимые детали)
+void __fastcall TFormAddOrder::ShowIzdelieInfo(String nIzd)
+{
+    TADOQuery *Query = new TADOQuery(this);
+    try
+    {
+        Query->Connection = DM->ADOConnection1;
+        Query->SQL->Add(
+            "SELECT p.n_det, p.name, q.kol, "
+            "COALESCE(SUM(spj.kol), 0) AS nalichie "
+			"FROM pmib2702.q q"
+			"INNER JOIN pmib2702.p p ON q.n_det = p.n_det "
+			"LEFT JOIN pmib2702.spj1 spj1 spj ON p.n_det = spj.n_det AND spj.n_izd = :n_izd "
+            "WHERE q.n_izd = :n_izd "
+            "GROUP BY p.n_det, p.name, q.kol "
+            "ORDER BY p.n_det"
+        );
+        Query->Parameters->ParamByName("n_izd")->Value = nIzd;
+        Query->Open();
+
+        MemoInfo->Lines->Clear();
+        MemoInfo->Lines->Add("Необходимые детали для изделия " + nIzd + ":");
+        MemoInfo->Lines->Add("-------------------------------------------");
+
+        while (!Query->Eof)
+        {
+            String det = Query->FieldByName("n_det")->AsString.Trim();
+            String name = Query->FieldByName("name")->AsString.Trim();
+            int kol = Query->FieldByName("kol")->AsInteger;
+            int nalichie = Query->FieldByName("nalichie")->AsInteger;
+
+            String line = det + " (" + name + "): " + IntToStr(kol) +
+                         " шт. (в наличии: " + IntToStr(nalichie) + ")";
+            MemoInfo->Lines->Add(line);
+
+            Query->Next();
+        }
+
+        Query->Close();
+        delete Query;
+    }
+    catch (Exception &e)
+    {
+        delete Query;
+        MemoInfo->Lines->Add("Ошибка: " + e.Message);
+    }
+}
+//---------------------------------------------------------------------------
+
+// Кнопка "OK" - добавление заказа
+void __fastcall TFormAddOrder::ButtonOKClick(TObject *Sender)
+{
+    try
+    {
+        // Проверка заполненности полей
+        if (ComboBoxIzdeliya->ItemIndex <= 0)
+        {
+            ShowMessage("Пожалуйста, выберите изделие!");
+            ComboBoxIzdeliya->SetFocus();
+            return;
+        }
+
+        if (ComboBoxZakazchiki->ItemIndex <= 0)
+        {
+            ShowMessage("Пожалуйста, выберите заказчика!");
+            ComboBoxZakazchiki->SetFocus();
+            return;
+        }
+
+        int kol = StrToIntDef(EditKolichestvo->Text, 0);
+        if (kol <= 0)
+        {
+            ShowMessage("Количество должно быть больше нуля!");
+            EditKolichestvo->SetFocus();
+            return;
+        }
+
+        double cost = StrToFloatDef(EditCena->Text, 0.0);
+        if (cost <= 0)
+        {
+            ShowMessage("Цена должна быть больше нуля!");
+            EditCena->SetFocus();
+            return;
+        }
+
+        // Извлечение номеров из комбобоксов
+        String selectedIzd = ComboBoxIzdeliya->Text;
+        String nIzd = selectedIzd.SubString(1, selectedIzd.Pos(" - ") - 1).Trim();
+
+        String selectedCl = ComboBoxZakazchiki->Text;
+        String nCl = selectedCl.SubString(1, selectedCl.Pos(" - ") - 1).Trim();
+
+        // Добавление заказа через модуль данных
+        if (DM->AddNewOrder(nIzd, nCl, kol, cost))
+        {
+            ModalResult = mrOk;
+        }
+    }
+    catch (Exception &e)
+    {
+        ShowMessage("Ошибка: " + e.Message);
+    }
+}
+//---------------------------------------------------------------------------
+
+// Кнопка "Отмена"
+void __fastcall TFormAddOrder::ButtonCancelClick(TObject *Sender)
+{
+    ModalResult = mrCancel;
+}
+//---------------------------------------------------------------------------

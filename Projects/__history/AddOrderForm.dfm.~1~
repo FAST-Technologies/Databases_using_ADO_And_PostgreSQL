@@ -1,0 +1,134 @@
+object FormAddOrder: TFormAddOrder
+  Left = 0
+  Top = 0
+  BorderIcons = [biSystemMenu]
+  BorderStyle = bsDialog
+  Caption = 'Добавление нового заказа'
+  ClientHeight = 500
+  ClientWidth = 500
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -12
+  Font.Name = 'Segoe UI'
+  Font.Style = []
+  Position = poMainFormCenter
+  TextHeight = 15
+  object Panel1: TPanel
+    Left = 0
+    Top = 0
+    Width = 500
+    Height = 450
+    Align = alClient
+    BevelOuter = bvNone
+    TabOrder = 0
+    object Label1: TLabel
+      Left = 10
+      Top = 10
+      Width = 44
+      Height = 15
+      Caption = 'Изделие:'
+    end
+    object Label2: TLabel
+      Left = 10
+      Top = 60
+      Width = 63
+      Height = 15
+      Caption = 'Заказчик:'
+    end
+    object Label3: TLabel
+      Left = 10
+      Top = 110
+      Width = 72
+      Height = 15
+      Caption = 'Количество:'
+    end
+    object Label4: TLabel
+      Left = 10
+      Top = 160
+      Width = 34
+      Height = 15
+      Caption = 'Цена:'
+    end
+    object Label5: TLabel
+      Left = 10
+      Top = 210
+      Width = 118
+      Height = 15
+      Caption = 'Информация о деталях:'
+    end
+    object ComboBoxIzdeliya: TComboBox
+      Left = 10
+      Top = 30
+      Width = 480
+      Height = 23
+      Style = csDropDownList
+      TabOrder = 0
+      OnChange = ComboBoxIzdeliyaChange
+    end
+    object ComboBoxZakazchiki: TComboBox
+      Left = 10
+      Top = 80
+      Width = 480
+      Height = 23
+      Style = csDropDownList
+      TabOrder = 1
+    end
+    object EditKolichestvo: TEdit
+      Left = 10
+      Top = 130
+      Width = 121
+      Height = 23
+      NumbersOnly = True
+      TabOrder = 2
+      Text = '1'
+    end
+    object EditCena: TEdit
+      Left = 10
+      Top = 180
+      Width = 121
+      Height = 23
+      NumbersOnly = True
+      TabOrder = 3
+      Text = '0.00'
+    end
+    object MemoInfo: TMemo
+      Left = 10
+      Top = 230
+      Width = 480
+      Height = 210
+      ReadOnly = True
+      ScrollBars = ssVertical
+      TabOrder = 4
+    end
+  end
+  object Panel2: TPanel
+    Left = 0
+    Top = 450
+    Width = 500
+    Height = 50
+    Align = alBottom
+    BevelOuter = bvNone
+    TabOrder = 1
+    object ButtonOK: TButton
+      Left = 320
+      Top = 10
+      Width = 75
+      Height = 30
+      Caption = 'OK'
+      Default = True
+      TabOrder = 0
+      OnClick = ButtonOKClick
+    end
+    object ButtonCancel: TButton
+      Left = 405
+      Top = 10
+      Width = 75
+      Height = 30
+      Cancel = True
+      Caption = 'Отмена'
+      TabOrder = 1
+      OnClick = ButtonCancelClick
+    end
+  end
+end

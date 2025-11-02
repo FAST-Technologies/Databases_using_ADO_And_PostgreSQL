@@ -1,0 +1,149 @@
+object FormMain: TFormMain
+  Left = 0
+  Top = 0
+  Caption = 'Managing orders and details'
+  ClientHeight = 600
+  ClientWidth = 900
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -12
+  Font.Name = 'Segoe UI'
+  Font.Style = []
+  Position = poScreenCenter
+  OnCreate = FormCreate
+  TextHeight = 15
+  object Panel1: TPanel
+    Left = 0
+    Top = 0
+    Width = 900
+    Height = 40
+    Align = alTop
+    BevelOuter = bvNone
+    TabOrder = 0
+    ExplicitTop = 4
+    object ButtonAddOrder: TButton
+      Left = 10
+      Top = 8
+      Width = 100
+      Height = 25
+      Caption = 'Add order'
+      TabOrder = 0
+      OnClick = ButtonAddOrderClick
+    end
+    object ButtonRefresh: TButton
+      Left = 120
+      Top = 8
+      Width = 75
+      Height = 25
+      Caption = 'Update'
+      TabOrder = 1
+      OnClick = ButtonRefreshClick
+    end
+  end
+  object Panel2: TPanel
+    Left = 0
+    Top = 40
+    Width = 900
+    Height = 240
+    Align = alTop
+    BevelOuter = bvNone
+    TabOrder = 1
+    DesignSize = (
+      900
+      240)
+    object Label1: TLabel
+      Left = 10
+      Top = 10
+      Width = 297
+      Height = 15
+      Caption = 'Details and products (Query 1):'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Segoe UI'
+      Font.Style = [fsBold]
+      ParentFont = False
+      OnClick = Label1Click
+    end
+    object DBGrid1: TDBGrid
+      Left = 10
+      Top = 30
+      Width = 878
+      Height = 200
+      Anchors = [akLeft, akTop, akRight, akBottom]
+      PopupMenu = PopupMenu1
+      TabOrder = 0
+      TitleFont.Charset = DEFAULT_CHARSET
+      TitleFont.Color = clWindowText
+      TitleFont.Height = -12
+      TitleFont.Name = 'Segoe UI'
+      TitleFont.Style = []
+      OnDrawColumnCell = DBGrid1DrawColumnCell
+    end
+  end
+  object Panel3: TPanel
+    Left = 0
+    Top = 280
+    Width = 900
+    Height = 300
+    Align = alClient
+    BevelOuter = bvNone
+    TabOrder = 2
+    DesignSize = (
+      900
+      300)
+    object Label2: TLabel
+      Left = 10
+      Top = 10
+      Width = 32
+      Height = 15
+      Caption = 'Order for chosen detail (Query 2):'
+      Font.Charset = DEFAULT_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -12
+      Font.Name = 'Segoe UI'
+      Font.Style = [fsBold]
+      ParentFont = False
+    end
+    object DBGrid2: TDBGrid
+      Left = 10
+      Top = 30
+      Width = 878
+      Height = 200
+      Anchors = [akLeft, akTop, akRight, akBottom]
+      PopupMenu = PopupMenu1
+      TabOrder = 0
+      TitleFont.Charset = DEFAULT_CHARSET
+      TitleFont.Color = clWindowText
+      TitleFont.Height = -12
+      TitleFont.Name = 'Segoe UI'
+      TitleFont.Style = []
+      OnDrawColumnCell = DBGrid2DrawColumnCell
+    end
+  end
+  object StatusBar1: TStatusBar
+    Left = 0
+    Top = 580
+    Width = 900
+    Height = 20
+    Panels = <>
+    SimplePanel = True
+    SimpleText = 'Ready'
+  end
+  object PopupMenu1: TPopupMenu
+    Left = 400
+    Top = 100
+    object MenuAddOrder: TMenuItem
+      Caption = 'Add order'
+      OnClick = MenuAddOrderClick
+    end
+    object N1: TMenuItem
+      Caption = '-'
+    end
+    object MenuRefresh: TMenuItem
+      Caption = 'Update'
+      OnClick = MenuRefreshClick
+    end
+  end
+end
