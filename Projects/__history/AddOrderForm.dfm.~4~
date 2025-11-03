@@ -14,7 +14,9 @@ object FormAddOrder: TFormAddOrder
   Font.Style = []
   Position = poMainFormCenter
   OnCreate = FormCreate
+  PixelsPerInch = 96
   TextHeight = 17
+  
   object PanelHeader: TPanel
     Left = 0
     Top = 0
@@ -28,9 +30,9 @@ object FormAddOrder: TFormAddOrder
     object LabelTitle: TLabel
       Left = 20
       Top = 15
-      Width = 118
+      Width = 160
       Height = 25
-      Caption = #62685' New Order'
+      Caption = #128221' New Order'
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWhite
       Font.Height = -19
@@ -39,6 +41,7 @@ object FormAddOrder: TFormAddOrder
       ParentFont = False
     end
   end
+  
   object Panel1: TPanel
     Left = 0
     Top = 60
@@ -65,7 +68,7 @@ object FormAddOrder: TFormAddOrder
     object Label2: TLabel
       Left = 20
       Top = 85
-      Width = 63
+      Width = 64
       Height = 17
       Caption = 'Customer:'
       Font.Charset = DEFAULT_CHARSET
@@ -78,7 +81,7 @@ object FormAddOrder: TFormAddOrder
     object Label3: TLabel
       Left = 20
       Top = 150
-      Width = 56
+      Width = 58
       Height = 17
       Caption = 'Quantity:'
       Font.Charset = DEFAULT_CHARSET
@@ -91,7 +94,7 @@ object FormAddOrder: TFormAddOrder
     object Label4: TLabel
       Left = 290
       Top = 150
-      Width = 32
+      Width = 34
       Height = 17
       Caption = 'Price:'
       Font.Charset = DEFAULT_CHARSET
@@ -104,7 +107,7 @@ object FormAddOrder: TFormAddOrder
     object Label6: TLabel
       Left = 20
       Top = 215
-      Width = 89
+      Width = 93
       Height = 17
       Caption = 'Payment Date:'
       Font.Charset = DEFAULT_CHARSET
@@ -117,7 +120,7 @@ object FormAddOrder: TFormAddOrder
     object Label7: TLabel
       Left = 20
       Top = 280
-      Width = 88
+      Width = 99
       Height = 17
       Caption = 'Shipping Date:'
       Font.Charset = DEFAULT_CHARSET
@@ -130,7 +133,7 @@ object FormAddOrder: TFormAddOrder
     object Label5: TLabel
       Left = 20
       Top = 345
-      Width = 95
+      Width = 113
       Height = 17
       Caption = 'Product Details:'
       Font.Charset = DEFAULT_CHARSET
@@ -140,6 +143,7 @@ object FormAddOrder: TFormAddOrder
       Font.Style = [fsBold]
       ParentFont = False
     end
+    
     object ComboBoxIzdeliya: TComboBox
       Left = 20
       Top = 45
@@ -155,12 +159,13 @@ object FormAddOrder: TFormAddOrder
       TabOrder = 0
       OnChange = ComboBoxIzdeliyaChange
     end
+    
     object ComboBoxZakazchiki: TComboBox
       Left = 20
       Top = 110
       Width = 520
       Height = 25
-      Style = csDropDownList
+	  Style = csDropDownList
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
       Font.Height = -13
@@ -169,6 +174,7 @@ object FormAddOrder: TFormAddOrder
       ParentFont = False
       TabOrder = 1
     end
+    
     object EditKolichestvo: TEdit
       Left = 20
       Top = 175
@@ -184,6 +190,7 @@ object FormAddOrder: TFormAddOrder
       TabOrder = 2
       Text = '1'
     end
+    
     object EditCena: TEdit
       Left = 290
       Top = 175
@@ -198,6 +205,7 @@ object FormAddOrder: TFormAddOrder
       TabOrder = 3
       Text = '0.00'
     end
+    
     object CheckBoxDatePay: TCheckBox
       Left = 20
       Top = 240
@@ -213,6 +221,7 @@ object FormAddOrder: TFormAddOrder
       TabOrder = 4
       OnClick = CheckBoxDatePayClick
     end
+    
     object DateTimePickerPay: TDateTimePicker
       Left = 230
       Top = 238
@@ -229,6 +238,7 @@ object FormAddOrder: TFormAddOrder
       ParentFont = False
       TabOrder = 5
     end
+    
     object CheckBoxDateShip: TCheckBox
       Left = 20
       Top = 305
@@ -244,6 +254,7 @@ object FormAddOrder: TFormAddOrder
       TabOrder = 6
       OnClick = CheckBoxDateShipClick
     end
+    
     object DateTimePickerShip: TDateTimePicker
       Left = 230
       Top = 303
@@ -260,6 +271,7 @@ object FormAddOrder: TFormAddOrder
       ParentFont = False
       TabOrder = 7
     end
+    
     object MemoInfo: TMemo
       Left = 20
       Top = 370
@@ -277,6 +289,7 @@ object FormAddOrder: TFormAddOrder
       TabOrder = 8
     end
   end
+  
   object Panel2: TPanel
     Left = 0
     Top = 590

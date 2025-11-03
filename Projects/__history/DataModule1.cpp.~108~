@@ -67,7 +67,7 @@ bool __fastcall TDM::LoadDatabaseConfig()
         TIniFile *ini = new TIniFile(configPath);
         try
         {
-            FDBConfig.Host = ini->ReadString("Database", "Host", "students.ami.nstu.ru");
+            FDBConfig.Host = ini->ReadString("Database", "Host", "localhost");
             FDBConfig.Port = ini->ReadString("Database", "Port", "5432");
             FDBConfig.Database = ini->ReadString("Database", "Database", "postgres");
             FDBConfig.User = ini->ReadString("Database", "User", "postgres");

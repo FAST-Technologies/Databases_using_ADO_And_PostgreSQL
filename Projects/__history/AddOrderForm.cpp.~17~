@@ -68,6 +68,8 @@ void __fastcall TFormAddOrder::CheckBoxDateShipClick(TObject *Sender)
 
 
 //---------------------------------------------------------------------------
+
+
 // Загрузка списка изделий
 void __fastcall TFormAddOrder::LoadIzdeliya()
 {
@@ -75,7 +77,7 @@ void __fastcall TFormAddOrder::LoadIzdeliya()
     try
     {
         Query->Connection = DM->ADOConnection1;
-		Query->SQL->Add("SELECT n_izd, name, town FROM " + DM->SchemaName + ".j j ORDER BY n_izd");
+		Query->SQL->Add("SELECT n_izd, name, town FROM pmib2702.j j ORDER BY n_izd");
         Query->Open();
 
         ComboBoxIzdeliya->Items->Clear();
@@ -101,6 +103,7 @@ void __fastcall TFormAddOrder::LoadIzdeliya()
 	}
 }
 //---------------------------------------------------------------------------
+
 // Загрузка списка заказчиков
 void __fastcall TFormAddOrder::LoadZakazchiki()
 {
@@ -108,7 +111,7 @@ void __fastcall TFormAddOrder::LoadZakazchiki()
     try
     {
         Query->Connection = DM->ADOConnection1;
-		Query->SQL->Add("SELECT n_cl, name, town FROM " + DM->SchemaName + ".c c ORDER BY n_cl");
+		Query->SQL->Add("SELECT n_cl, name, town FROM pmib2702.c c ORDER BY n_cl");
         Query->Open();
 
         ComboBoxZakazchiki->Items->Clear();
@@ -150,7 +153,7 @@ void __fastcall TFormAddOrder::ComboBoxIzdeliyaChange(TObject *Sender)
         {
             Query->Connection = DM->ADOConnection1;
             Query->SQL->Add(
-				"SELECT cost FROM " + DM->SchemaName + ".v v "
+				"SELECT cost FROM pmib2702.v v "
                 "WHERE n_izd = :n_izd "
                 "ORDER BY date_begin DESC "
                 "LIMIT 1"
@@ -188,12 +191,12 @@ void __fastcall TFormAddOrder::ShowIzdelieInfo(String nIzd)
         Query->SQL->Add(
             "SELECT p.n_det, p.name, q.kol, "
             "COALESCE(SUM(spj.kol), 0) AS nalichie "
-			"FROM " + DM->SchemaName + ".q q"
-			"INNER JOIN " + DM->SchemaName + ".p p ON q.n_det = p.n_det "
-			"LEFT JOIN " + DM->SchemaName + ".spj1 spj1 spj ON p.n_det = spj.n_det AND spj.n_izd = :n_izd "
+			"FROM pmib2702.q q"
+			"INNER JOIN pmib2702.p p ON q.n_det = p.n_det "
+			"LEFT JOIN pmib2702.spj1 spj1 spj ON p.n_det = spj.n_det AND spj.n_izd = :n_izd "
             "WHERE q.n_izd = :n_izd "
             "GROUP BY p.n_det, p.name, q.kol "
-            "ORDER BY p.n_det ASC; "
+            "ORDER BY p.n_det"
         );
         Query->Parameters->ParamByName("n_izd")->Value = nIzd;
         Query->Open();

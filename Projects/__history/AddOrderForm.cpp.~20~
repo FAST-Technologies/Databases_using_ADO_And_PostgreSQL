@@ -193,7 +193,7 @@ void __fastcall TFormAddOrder::ShowIzdelieInfo(String nIzd)
 			"LEFT JOIN " + DM->SchemaName + ".spj1 spj1 spj ON p.n_det = spj.n_det AND spj.n_izd = :n_izd "
             "WHERE q.n_izd = :n_izd "
             "GROUP BY p.n_det, p.name, q.kol "
-            "ORDER BY p.n_det ASC; "
+            "ORDER BY p.n_det"
         );
         Query->Parameters->ParamByName("n_izd")->Value = nIzd;
         Query->Open();

@@ -6,7 +6,6 @@
 #include <System.Classes.hpp>
 #include <Data.DB.hpp>
 #include <Data.Win.ADODB.hpp>
-#include <System.IniFiles.hpp>
 //---------------------------------------------------------------------------
 class TDM : public TDataModule
 {
@@ -22,24 +21,8 @@ __published:	// IDE-managed Components
 
 private:	// User declarations
 	String FSchemaName;
-
-    struct TDatabaseConfig {
-	   String Host;
-	   String Port;
-	   String Database;
-	   String User;
-	   String Password;
-	   String Schema;
-	   String Driver;
-	   String Postgre_DSN;
-       String SSL_Mode;
-	} FDBConfig;
-
-	bool __fastcall LoadDatabaseConfig();
-    String __fastcall GetConfigFilePath();
-
 public:		// User declarations
-	__fastcall TDM(TComponent* Owner);
+    __fastcall TDM(TComponent* Owner);
 
     // Методы для работы с данными
     void __fastcall ConnectToDatabase();

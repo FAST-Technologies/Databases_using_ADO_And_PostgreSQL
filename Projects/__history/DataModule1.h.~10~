@@ -31,8 +31,7 @@ private:	// User declarations
 	   String Password;
 	   String Schema;
 	   String Driver;
-	   String Postgre_DSN;
-       String SSL_Mode;
+       String Postgre_DSN;
 	} FDBConfig;
 
 	bool __fastcall LoadDatabaseConfig();

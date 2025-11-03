@@ -22,8 +22,10 @@ __published:	// IDE-managed Components
 
 private:	// User declarations
 	String FSchemaName;
+public:		// User declarations
+	__fastcall TDM(TComponent* Owner);
 
-    struct TDatabaseConfig {
+	struct TDatabaseConfig {
 	   String Host;
 	   String Port;
 	   String Database;
@@ -31,15 +33,8 @@ private:	// User declarations
 	   String Password;
 	   String Schema;
 	   String Driver;
-	   String Postgre_DSN;
-       String SSL_Mode;
+       String Postgre_DSN;
 	} FDBConfig;
-
-	bool __fastcall LoadDatabaseConfig();
-    String __fastcall GetConfigFilePath();
-
-public:		// User declarations
-	__fastcall TDM(TComponent* Owner);
 
     // Методы для работы с данными
     void __fastcall ConnectToDatabase();

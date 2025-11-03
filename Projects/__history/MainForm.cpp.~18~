@@ -32,6 +32,7 @@ void __fastcall TFormMain::FormCreate(TObject *Sender)
 			return;
         }
 
+
         // Проверяем подключение к БД
         if (!DM->ADOConnection1->Connected)
         {
@@ -39,6 +40,15 @@ void __fastcall TFormMain::FormCreate(TObject *Sender)
 			return;
 		}
 
+//        // ИНИЦИАЛИЗИРУЕМ DataSource перед использованием
+//        if (!DataSourceDetails)
+//            DataSourceDetails = new TDataSource(this);
+//        if (!DataSourceOrders)
+//			DataSourceOrders = new TDataSource(this);
+//
+//        // Связываем гриды с источниками данных
+//        DataSourceDetails->DataSet = DM->QueryDetails;
+//        DataSourceOrders->DataSet = DM->QueryOrders;
 		DBGrid1->DataSource = DM->DataSourceDetails;
         DBGrid2->DataSource = DM->DataSourceOrders;
 

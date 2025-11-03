@@ -362,4 +362,5 @@
   c:\program\ files\ (x86)\embarcadero\studio\23.0\include\windows\sdk/wtypes.h \
   c:\program\ files\ (x86)\embarcadero\studio\23.0\include\windows\sdk/ocidl.h \
   c:\program\ files\ (x86)\embarcadero\studio\23.0\include\windows\sdk/transact.h \
-  c:\program\ files\ (x86)\embarcadero\studio\23.0\include\windows\rtl\Winapi.ADOInt.hpp
+  c:\program\ files\ (x86)\embarcadero\studio\23.0\include\windows\rtl\Winapi.ADOInt.hpp \
+  c:\program\ files\ (x86)\embarcadero\studio\23.0\include\windows\rtl\System.IniFiles.hpp

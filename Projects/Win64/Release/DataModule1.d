@@ -361,4 +361,8 @@
   c:\program\ files\ (x86)\embarcadero\studio\23.0\include\windows\sdk/wtypes.h \
   c:\program\ files\ (x86)\embarcadero\studio\23.0\include\windows\sdk/transact.h \
   c:\program\ files\ (x86)\embarcadero\studio\23.0\include\windows\rtl\Winapi.ADOInt.hpp \
-  c:\program\ files\ (x86)\embarcadero\studio\23.0\include\windows\rtl\System.DateUtils.hpp
+  c:\program\ files\ (x86)\embarcadero\studio\23.0\include\windows\rtl\System.IniFiles.hpp \
+  c:\program\ files\ (x86)\embarcadero\studio\23.0\include\windows\rtl\System.DateUtils.hpp \
+  c:\program\ files\ (x86)\embarcadero\studio\23.0\include\windows\rtl\System.IOUtils.hpp \
+  c:\program\ files\ (x86)\embarcadero\studio\23.0\include\windows\rtl\Winapi.KnownFolders.hpp \
+  c:\program\ files\ (x86)\embarcadero\studio\23.0\include\windows\rtl\System.Masks.hpp

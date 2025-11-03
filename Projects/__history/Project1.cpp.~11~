@@ -8,11 +8,24 @@ USEFORM("DataModule1.cpp", DM); /* TDataModule: File Type */
 USEFORM("MainForm.cpp", FormMain);
 USEFORM("AddOrderForm.cpp", FormAddOrder);
 //---------------------------------------------------------------------------
+// ДОБАВЬТЕ эту функцию для правильной кодировки
+//void SetupRussianEncoding()
+//{
+//    // Для консоли (если используется)
+//    SetConsoleCP(1251);
+//    SetConsoleOutputCP(1251);
+//
+//    // Для строк в памяти
+//    SetThreadLocale(1049); // Russian locale
+//}
+
 
 int WINAPI _tWinMain(HINSTANCE, HINSTANCE, LPTSTR, int)
 {
 	try
 	{
+//        SetupRussianEncoding();
+//        SetThreadLocale(1049); // Russian locale
 		Application->Initialize();
 		Application->MainFormOnTaskBar = true;
 		Application->CreateForm(__classid(TDM), &DM);

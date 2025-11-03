@@ -39,7 +39,6 @@ String __fastcall TDM::GetConfigFilePath()
 			ini->WriteString("Database", "Schema", "pmib2702");
 			ini->WriteString("Database", "Driver", "PostgreSQL Unicode");
 			ini->WriteString("Database", "Postgre_DSN", "PostgreSQL35W");
-			ini->WriteString("Database", "SSL_Mode", "prefer");
 
 			ShowMessage("Configuration file created:\n" + configPath + "\n\nPlease check the settings and restart the application.");
 		}
@@ -67,7 +66,7 @@ bool __fastcall TDM::LoadDatabaseConfig()
         TIniFile *ini = new TIniFile(configPath);
         try
         {
-            FDBConfig.Host = ini->ReadString("Database", "Host", "students.ami.nstu.ru");
+            FDBConfig.Host = ini->ReadString("Database", "Host", "localhost");
             FDBConfig.Port = ini->ReadString("Database", "Port", "5432");
             FDBConfig.Database = ini->ReadString("Database", "Database", "postgres");
             FDBConfig.User = ini->ReadString("Database", "User", "postgres");
@@ -75,7 +74,6 @@ bool __fastcall TDM::LoadDatabaseConfig()
 			FDBConfig.Schema = ini->ReadString("Database", "Schema", "public");
 			FDBConfig.Driver = ini->ReadString("Database", "Driver", "PostgreSQL Unicode");
 			FDBConfig.Postgre_DSN = ini->ReadString("Database", "Postgre_DSN", "PostgreSQL35W");
-			FDBConfig.SSL_Mode = ini->ReadString("Database", "SSL_Mode", "prefer");
 
             FSchemaName = FDBConfig.Schema;
 
