@@ -45,12 +45,14 @@ __published:	// IDE-managed Components
     void __fastcall ButtonRefreshClick(TObject *Sender);
     void __fastcall MenuAddOrderClick(TObject *Sender);
 	void __fastcall MenuRefreshClick(TObject *Sender);
+    void __fastcall SetupGridColumns2();
 
 private:	// User declarations
 	void __fastcall SetupGridColumns();
 
 public:		// User declarations
 	__fastcall TFormMain(TComponent* Owner);
+    void __fastcall RebuildGrid2();
 };
 //---------------------------------------------------------------------------
 extern PACKAGE TFormMain *FormMain;

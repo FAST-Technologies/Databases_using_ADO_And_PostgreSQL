@@ -1,4 +1,4 @@
-//---------------------------------------------------------------------------
+п»ї//---------------------------------------------------------------------------
 
 #ifndef DataModule1H
 #define DataModule1H
@@ -41,7 +41,6 @@ private:	// User declarations
 public:		// User declarations
 	__fastcall TDM(TComponent* Owner);
 
-    // Методы для работы с данными
     void __fastcall ConnectToDatabase();
 	void __fastcall LoadDetailsQuery();
     void __fastcall CheckDatabaseStructure();

@@ -5,6 +5,7 @@
 #pragma hdrstop
 
 #include "DataModule1.h"
+#include "MainForm.h"
 #include <System.DateUtils.hpp>
 #include <System.SysUtils.hpp>
 #include <System.IOUtils.hpp>
@@ -64,10 +65,10 @@ bool __fastcall TDM::LoadDatabaseConfig()
             throw Exception("Configuration file not found: " + configPath);
         }
 
-        TIniFile *ini = new TIniFile(configPath);
-        try
-        {
-            FDBConfig.Host = ini->ReadString("Database", "Host", "students.ami.nstu.ru");
+		TIniFile *ini = new TIniFile(configPath);
+		try
+		{
+			FDBConfig.Host = ini->ReadString("Database", "Host", "students.ami.nstu.ru");
             FDBConfig.Port = ini->ReadString("Database", "Port", "5432");
             FDBConfig.Database = ini->ReadString("Database", "Database", "postgres");
             FDBConfig.User = ini->ReadString("Database", "User", "postgres");
@@ -95,8 +96,8 @@ bool __fastcall TDM::LoadDatabaseConfig()
     catch (Exception &e)
     {
         ShowMessage("Error loading configuration:\n" + e.Message);
-        return false;
-    }
+		return false;
+	}
 }
 
 //---------------------------------------------------------------------------
@@ -104,17 +105,60 @@ bool __fastcall TDM::LoadDatabaseConfig()
 void __fastcall TDM::DataModuleCreate(TObject *Sender)
 {
     try
-	{
+    {
         if (!LoadDatabaseConfig())
         {
             throw Exception("Failed to load database configuration!");
         }
         Sleep(50);
-		ConnectToDatabase();
+        ConnectToDatabase();
         CheckDatabaseStructure();
         LoadDetailsQuery();
 
-        // Настраиваем событие AfterScroll для автоматического обновления второго грида
+		// 🔹 Инициализация QueryOrders
+        QueryOrders->SQL->Text =
+            "SELECT "
+            "    r.n_real AS n_zakaza, "
+            "    r.date_order AS data_zakaza, "
+            "    COALESCE(NULLIF(TRIM(c.name), ''), 'Отсутствует') AS zakazchik, "
+            "    COALESCE(NULLIF(TRIM(j.name), ''), 'Отсутствует') AS izdelie, "
+            "    r.kol AS kol_izdeliy, "
+            "    q.kol AS kol_det_na_1_izd, "
+            "    (r.kol * q.kol) AS kol_det_trebuetsya, "
+            "    COALESCE(nalichie.kol_nalichie, 0) AS kol_det_nalichie, "
+            "    CASE "
+            "        WHEN COALESCE(nalichie.kol_nalichie, 0) < (r.kol * q.kol) "
+            "        THEN 'ДЕФИЦИТ' "
+            "        ELSE 'OK' "
+            "    END AS status "
+            "FROM " + FSchemaName + ".r r "
+            "INNER JOIN " + FSchemaName + ".c c ON r.n_cl = c.n_cl "
+            "INNER JOIN " + FSchemaName + ".j j ON r.n_izd = j.n_izd "
+            "INNER JOIN " + FSchemaName + ".q q ON r.n_izd = q.n_izd "
+            "LEFT JOIN ( "
+            "    SELECT "
+            "        postavleno.n_det, "
+            "        postavleno.n_izd, "
+            "        (COALESCE(postavleno.kol_post, 0) - COALESCE(izrash.kol_izrash, 0)) AS kol_nalichie "
+            "    FROM ( "
+            "        SELECT n_det, n_izd, SUM(kol) AS kol_post "
+            "        FROM " + FSchemaName + ".spj1 "
+            "        GROUP BY n_det, n_izd "
+            "    ) AS postavleno "
+            "    LEFT JOIN ( "
+            "        SELECT q.n_det, q.n_izd, SUM(w.kol * q.kol) AS kol_izrash "
+            "        FROM " + FSchemaName + ".w w "
+            "        INNER JOIN " + FSchemaName + ".q q ON w.n_izd = q.n_izd "
+            "        GROUP BY q.n_det, q.n_izd "
+            "    ) AS izrash ON postavleno.n_det = izrash.n_det AND postavleno.n_izd = izrash.n_izd "
+            ") AS nalichie ON q.n_det = nalichie.n_det AND r.n_izd = nalichie.n_izd "
+            "WHERE q.n_det = :n_det AND r.date_ship IS NULL "
+            "ORDER BY r.date_order ASC;";
+
+        QueryOrders->Parameters->ParamByName("n_det")->Value = "DUMMY";
+        QueryOrders->Open();
+        QueryOrders->Close();
+
         if (QueryDetails)
             QueryDetails->AfterScroll = QueryDetailsAfterScroll;
     }
@@ -213,12 +257,13 @@ void __fastcall TDM::ConnectToDatabase()
         throw Exception("Ошибка подключения к БД: " + e.Message +
                        "\nПроверьте:\n"
                        "1. Наличие ODBC источника данных 'PostgreSQL_DSN'\n"
-                       "2. Корректность логина/пароля\n"
-                       "3. Доступность сервера БД");
-    }
+					   "2. Корректность логина/пароля\n"
+					   "3. Доступность сервера БД");
+	}
 }
 //---------------------------------------------------------------------------
 
+// ЗАПРОС 1: Загрузка данных о деталях и изделиях
 // ЗАПРОС 1: Загрузка данных о деталях и изделиях
 void __fastcall TDM::LoadDetailsQuery()
 {
@@ -229,10 +274,10 @@ void __fastcall TDM::LoadDetailsQuery()
 		// SQL-запрос для получения информации о деталях и изделиях
 		QueryDetails->SQL->Clear();
 		QueryDetails->SQL->Add(
-		"SELECT"
-		"	p.n_det,"
-		"	p.name AS det_name,"
-		"	j.n_izd,"
+		"SELECT "
+		"	p.n_det, "
+		"	p.name AS det_name, "
+		"	j.n_izd, "
 		"	j.name AS izd_name, "
 		"	COALESCE(nalichie.kol_nalichie, 0) AS kol_nalichie, "
 		"	COALESCE(potrebnost.kol_trebuetsya, 0) AS kol_trebuetsya, "
@@ -246,18 +291,27 @@ void __fastcall TDM::LoadDetailsQuery()
 		"INNER JOIN " + FSchemaName + ".q q ON p.n_det = q.n_det AND j.n_izd = q.n_izd "
 		"LEFT JOIN ( "
 		"	SELECT "
-		"		n_det, "
-		"		n_izd, "
-		"		SUM(kol) AS kol_nalichie "
-		"	FROM " + FSchemaName + ".spj1 spj1 "
-		"	GROUP BY n_det, n_izd "
+		"		postavleno.n_det, "
+		"		postavleno.n_izd, "
+		"		(COALESCE(postavleno.kol_post, 0) - COALESCE(izrash.kol_izrash, 0)) AS kol_nalichie "
+		"	FROM ( "
+		"		SELECT n_det, n_izd, SUM(kol) AS kol_post "
+		"		FROM " + FSchemaName + ".spj1 "
+		"		GROUP BY n_det, n_izd "
+		"	) AS postavleno "
+		"	LEFT JOIN ( "
+		"		SELECT q.n_det, q.n_izd, SUM(w.kol * q.kol) AS kol_izrash "
+		"		FROM " + FSchemaName + ".w w "
+		"		INNER JOIN " + FSchemaName + ".q q ON w.n_izd = q.n_izd "
+		"		GROUP BY q.n_det, q.n_izd "
+		"	) AS izrash ON postavleno.n_det = izrash.n_det AND postavleno.n_izd = izrash.n_izd "
 		") AS nalichie ON p.n_det = nalichie.n_det AND j.n_izd = nalichie.n_izd "
 		"LEFT JOIN ( "
 		"	SELECT "
 		"		q.n_det, "
 		"		q.n_izd, "
 		"		SUM(r.kol * q.kol) AS kol_trebuetsya "
-		"	FROM " + FSchemaName + ".r r"
+		"	FROM " + FSchemaName + ".r r "
 		"	INNER JOIN " + FSchemaName + ".q q ON r.n_izd = q.n_izd "
 		"	WHERE r.date_ship IS NULL "
 		"	GROUP BY q.n_det, q.n_izd "
@@ -265,13 +319,31 @@ void __fastcall TDM::LoadDetailsQuery()
 		"ORDER BY p.n_det, j.n_izd ASC;"
 		);
 
-        QueryDetails->Open();
-    }
-    catch (Exception &e)
-    {
-        throw Exception("Ошибка выполнения запроса 1: " + e.Message);
-    }
+		QueryDetails->Open();
+		QueryDetails->First();
+        while (!QueryDetails->Eof)
+        {
+            QueryDetails->Edit(); // Входим в режим редактирования
+
+            // Проверяем и заменяем пустые значения
+            if (QueryDetails->FieldByName("det_name")->AsString.Trim().IsEmpty()) {
+				QueryDetails->FieldByName("det_name")->AsString = "Отсутствует";
+            }
+            if (QueryDetails->FieldByName("izd_name")->AsString.Trim().IsEmpty()) {
+				QueryDetails->FieldByName("izd_name")->AsString = "Отсутствует";
+			}
+
+			QueryDetails->Post(); // Сохраняем изменения
+			QueryDetails->Next();
+		}
+		QueryDetails->First();
+	}
+	catch (Exception &e)
+	{
+		throw Exception("Ошибка выполнения запроса 1: " + e.Message);
+	}
 }
+//---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 
 // ЗАПРОС 2: Загрузка заказов для указанной детали
@@ -280,45 +352,12 @@ void __fastcall TDM::LoadOrdersForDetail(String detailNum)
     try
     {
         QueryOrders->Close();
-
-        QueryOrders->SQL->Clear();
-		QueryOrders->SQL->Add(
-            "SELECT "
-            "    r.n_real AS n_zakaza, "
-            "    r.date_order AS data_zakaza, "
-            "    c.name AS zakazchik, "
-			"    j.name AS izdelie, "
-            "    r.kol AS kol_izdeliy, "
-            "    q.kol AS kol_det_na_1_izd, "
-			"    (r.kol * q.kol) AS kol_det_trebuetsya, "
-			"    COALESCE(nalichie.kol_det_nalichie, 0) AS kol_det_nalichie, "
-			"    CASE"
-			"	     WHEN COALESCE(nalichie.kol_det_nalichie, 0) < (r.kol * q.kol) "
-			"        THEN 'ДЕФИЦИТ' "
-			"        ELSE 'OK' "
-			"    END AS status "
-			"FROM " + FSchemaName + ".r r "
-			"INNER JOIN " + FSchemaName + ".c c ON r.n_cl = c.n_cl "
-			"INNER JOIN " + FSchemaName + ".j j ON r.n_izd = j.n_izd "
-			"INNER JOIN " + FSchemaName + ".q ON r.n_izd = q.n_izd "
-			"LEFT JOIN ( "
-			"     SELECT n_det, "
-			"            n_izd, "
-			"            SUM(kol) AS kol_det_nalichie "
-			"     FROM " + FSchemaName + ".spj1"
-			"     GROUP BY n_det, n_izd "
-			") AS nalichie ON q.n_det = nalichie.n_det AND r.n_izd = nalichie.n_izd "
-            "WHERE q.n_det = :n_det "
-            "AND r.date_ship IS NULL "
-			"ORDER BY r.date_order ASC; "
-        );
-
-		QueryOrders->Parameters->ParamByName("n_det")->Value = detailNum;
+        QueryOrders->Parameters->ParamByName("n_det")->Value = detailNum;
         QueryOrders->Open();
     }
     catch (Exception &e)
     {
-		throw Exception("Ошибка выполнения запроса 2: " + e.Message);
+        throw Exception("Ошибка выполнения запроса 2: " + e.Message);
     }
 }
 //---------------------------------------------------------------------------
@@ -332,97 +371,80 @@ void __fastcall TDM::QueryDetailsAfterScroll(TDataSet *DataSet)
         {
             String detailNum = QueryDetails->FieldByName("n_det")->AsString.Trim();
             LoadOrdersForDetail(detailNum);
-        }
-    }
-    catch (Exception &e)
-    {
-        ShowMessage("Ошибка при обновлении списка заказов: " + e.Message);
-    }
+
+            // Обновляем грид
+            if (FormMain)
+				FormMain->RebuildGrid2();
+		}
+	}
+	catch (Exception &e)
+	{
+		ShowMessage("Ошибка при обновлении списка заказов: " + e.Message);
+	}
 }
 //---------------------------------------------------------------------------
 
 // ЗАПРОС 3: Добавление нового заказа
-bool __fastcall TDM::AddNewOrder(String nIzd, String nCl, int kol, double cost, Variant datePay, Variant dateShip)
-{
+bool __fastcall TDM::AddNewOrder(String nIzd, String nCl, int kol, double cost, Variant datePay, Variant dateShip){
 	TADOQuery *InsertQuery = new TADOQuery(this);
     try
     {
-		InsertQuery->Connection = ADOConnection1;
+        InsertQuery->Connection = ADOConnection1;
 
-        // Генерация нового номера заказа
-        TADOQuery *MaxQuery = new TADOQuery(this);
-        try
-        {
-            MaxQuery->Connection = ADOConnection1;
-            MaxQuery->SQL->Add(
-                "SELECT COALESCE(MAX(CAST(SUBSTRING(n_real FROM 2) AS INTEGER)), 0) + 1 AS next_num "
-				"FROM " + FSchemaName + ".r WHERE n_real ~ '^R[0-9]+$'"
-			);
-            MaxQuery->Open();
-            int nextNum = MaxQuery->FieldByName("next_num")->AsInteger;
-            String newOrderNum = "R" + IntToStr(nextNum);
-            MaxQuery->Close();
-            delete MaxQuery;
+        // 🔹 Убираем n_real из INSERT — его сгенерирует триггер!
+		InsertQuery->SQL->Text =
+            "INSERT INTO " + FSchemaName + ".r (n_izd, n_cl, date_order, kol, cost, date_pay, date_ship) "
+            "VALUES (:n_izd, :n_cl, :date_order, :kol, :cost, :date_pay, :date_ship)";
 
-            // Вставка нового заказа
-            InsertQuery->SQL->Clear();
-            InsertQuery->SQL->Add(
-				"INSERT INTO " + FSchemaName + ".r (n_real, n_izd, n_cl, date_order, kol, cost, date_pay, date_ship) "
-				"VALUES (:n_real, :n_izd, :n_cl, :date_order, :kol, :cost, :date_pay, :date_ship)"
-            );
+        InsertQuery->Parameters->ParamByName("n_izd")->Value = nIzd;
+        InsertQuery->Parameters->ParamByName("n_cl")->Value = nCl;
+        InsertQuery->Parameters->ParamByName("date_order")->Value = Date();
+        InsertQuery->Parameters->ParamByName("kol")->Value = kol;
+        InsertQuery->Parameters->ParamByName("cost")->Value = cost;
+        InsertQuery->Parameters->ParamByName("date_pay")->Value = datePay.IsNull() ? Null() : datePay;
+        InsertQuery->Parameters->ParamByName("date_ship")->Value = dateShip.IsNull() ? Null() : dateShip;
 
-            InsertQuery->Parameters->ParamByName("n_real")->Value = newOrderNum;
-            InsertQuery->Parameters->ParamByName("n_izd")->Value = nIzd;
-            InsertQuery->Parameters->ParamByName("n_cl")->Value = nCl;
-            InsertQuery->Parameters->ParamByName("date_order")->Value = Date();
-            InsertQuery->Parameters->ParamByName("kol")->Value = kol;
-			InsertQuery->Parameters->ParamByName("cost")->Value = cost;
+        InsertQuery->ExecSQL();
 
-			if (datePay.IsNull()) {
-				 InsertQuery->Parameters->ParamByName("date_pay")->Value = Null;
-			}  else {
-				 InsertQuery->Parameters->ParamByName("date_pay")->Value = datePay;
-			}
-
-			if (dateShip.IsNull()) {
-				 InsertQuery->Parameters->ParamByName("date_ship")->Value = Null;
-			}  else {
-				 InsertQuery->Parameters->ParamByName("date_ship")->Value = dateShip;
-			}
-
-			InsertQuery->ExecSQL();
-
-			String message = "Заказ " + newOrderNum + " успешно добавлен!\n" +
+		String message = "Заказ " + newOrderNum + " успешно добавлен!\n" +
                        "Изделие: " + nIzd + "\n" +
                        "Заказчик: " + nCl + "\n" +
 					   "Количество: " + IntToStr(kol) + "\n" +
 					   "Цена: " + FloatToStrF(cost, ffFixed, 10, 2) + "\n" +
-					   "Payment date: " + (datePay.IsNull() ? "Not specified (NULL)" : DateToStr(datePay)) + "\n" +
-					   "Shipping date: " + (dateShip.IsNull() ? "Not specified (NULL)" : DateToStr(dateShip));
+					   "Дата оплаты: " + (datePay.IsNull() ? "Не указана (NULL)" : DateToStr(datePay)) + "\n" +
+					   "Дата отправки: " + (dateShip.IsNull() ? "Не указана (NULL)" : DateToStr(dateShip));
 
-			ShowMessage(message);
+		ShowMessage(message);
 
-			// Обновляем данные в запросах
-            LoadDetailsQuery();
 
-            delete InsertQuery;
-            return true;
-        }
-        catch (...)
-        {
-            delete MaxQuery;
-            throw;
-        }
+        LoadDetailsQuery();
+        return true;
     }
     catch (Exception &e)
-    {
-        delete InsertQuery;
-        ShowMessage("Ошибка при добавлении заказа: " + e.Message);
+	{
+        String msg = e.Message;
+        if (msg.Pos("violates check constraint") > 0)
+        {
+            ShowMessage(
+                L"violates check constraint: Нарушено ограничение целостности данных!\n"
+				L"Проверьте:\n"
+				L"• Номер заказа должен начинаться с 'R'\n"
+                L"• Дата оплаты не может быть раньше даты заказа\n"
+				L"• Количество и цена должны быть > 0 " + e.Message
+			);
+        }
+        else if (msg.Pos("duplicate key") > 0)
+        {
+            ShowMessage(L"Ошибка: Нарушен уникальный ключ (возможно, дубль).");
+        }
+        else
+        {
+            ShowMessage("Ошибка при добавлении заказа: " + e.Message);
+        }
         return false;
     }
-}
-//---------------------------------------------------------------------------
-
+	delete InsertQuery;
+}//---------------------------------------------------------------------------
 // Получить количество деталей в наличии
 int __fastcall TDM::GetAvailableDetails(String nDet, String nIzd)
 {
@@ -442,7 +464,7 @@ int __fastcall TDM::GetAvailableDetails(String nDet, String nIzd)
         int result = Query->FieldByName("total")->AsInteger;
         Query->Close();
         delete Query;
-        return result;
+		return result;
     }
     catch (Exception &e)
     {
@@ -450,4 +472,3 @@ int __fastcall TDM::GetAvailableDetails(String nDet, String nIzd)
         return 0;
     }
 }
-//---------------------------------------------------------------------------
