@@ -25,6 +25,7 @@ object FormAddOrder: TFormAddOrder
     Color = 5395026
     ParentBackground = False
     TabOrder = 0
+    ExplicitWidth = 558
     object LabelTitle: TLabel
       Left = 20
       Top = 15
@@ -49,6 +50,8 @@ object FormAddOrder: TFormAddOrder
     Color = 14413823
     ParentBackground = False
     TabOrder = 1
+    ExplicitWidth = 558
+    ExplicitHeight = 522
     object Label1: TLabel
       Left = 20
       Top = 20
@@ -197,6 +200,8 @@ object FormAddOrder: TFormAddOrder
       ParentFont = False
       TabOrder = 3
       Text = '0.00'
+      OnKeyDown = EditCenaKeyDown
+      OnKeyPress = EditCenaKeyPress
     end
     object CheckBoxDatePay: TCheckBox
       Left = 20
@@ -287,6 +292,8 @@ object FormAddOrder: TFormAddOrder
     Color = 15790320
     ParentBackground = False
     TabOrder = 2
+    ExplicitTop = 582
+    ExplicitWidth = 558
     object ButtonOK: TButton
       Left = 360
       Top = 15
